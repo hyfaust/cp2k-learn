@@ -19,46 +19,40 @@
 
 ### 1.1 什么是密度泛函理论
 
-密度泛函理论 (Density Functional Theory, DFT) 是目前量子化学和凝聚态物理中应用最广泛的电子结构计算方法。它的核心思想是：**用电子密度 ρ(r) 代替波函数 Ψ 作为基本变量来描述多电子体系的基态性质**。
+密度泛函理论 (Density Functional Theory, DFT) 是目前量子化学和凝聚态物理中应用最广泛的电子结构计算方法。它的核心思想是：**用电子密度 $\rho(\mathbf{r})$ 代替波函数 $\Psi$ 作为基本变量来描述多电子体系的基态性质**。
 
 这一思想基于两个 Hohenberg-Kohn 定理（1964年）：
 
-1. **定理一**：外势 v(r) 是基态电子密度 ρ(r) 的唯一泛函（即知道了 ρ(r)，就确定了体系的所有基态性质）
-2. **定理二**：存在一个能量泛函 E[ρ]，其在真实基态密度处取极小值
+1. **定理一**：外势 $v(\mathbf{r})$ 是基态电子密度 $\rho(\mathbf{r})$ 的唯一泛函（即知道了 $\rho(\mathbf{r})$，就确定了体系的所有基态性质）
+2. **定理二**：存在一个能量泛函 $E[\rho]$，其在真实基态密度处取极小值
 
 ### 1.2 Kohn-Sham 方程
 
 1965年，Kohn 和 Sham 提出了一个实用的方案：将多电子问题映射到一组无相互作用的单电子方程——**Kohn-Sham 方程**：
 
-```
-[-½∇² + v_eff(r)] φᵢ(r) = εᵢ φᵢ(r)
-```
+$$\left[-\frac{1}{2}\nabla^2 + v_{\text{eff}}(\mathbf{r})\right] \phi_i(\mathbf{r}) = \varepsilon_i \phi_i(\mathbf{r})$$
 
-其中有效势 v_eff 包含三部分：
+其中有效势 $v_{\text{eff}}$ 包含三部分：
 
-```
-v_eff(r) = v_ext(r) + v_H(r) + v_xc(r)
-```
+$$v_{\text{eff}}(\mathbf{r}) = v_{\text{ext}}(\mathbf{r}) + v_{\text{H}}(\mathbf{r}) + v_{\text{xc}}(\mathbf{r})$$
 
-- **v_ext(r)**：外部势（通常是原子核产生的库仑势）
-- **v_H(r)**：Hartree 势，即经典电子-电子库仑排斥
-- **v_xc(r)**：交换关联势，包含所有量子力学的多体效应
+- **$v_{\text{ext}}(\mathbf{r})$**：外部势（通常是原子核产生的库仑势）
+- **$v_{\text{H}}(\mathbf{r})$**：Hartree 势，即经典电子-电子库仑排斥
+- **$v_{\text{xc}}(\mathbf{r})$**：交换关联势，包含所有量子力学的多体效应
 
 电子密度由 Kohn-Sham 轨道构建：
 
-```
-ρ(r) = Σᵢ |φᵢ(r)|²     （对所有占据态求和）
-```
+$$\rho(\mathbf{r}) = \sum_i |\phi_i(\mathbf{r})|^2$$
 
 ### 1.3 交换关联泛函
 
-DFT 的精度完全取决于**交换关联泛函** E_xc[ρ] 的近似形式。常用的泛函按精度递增分为几个层级（"Jacob's Ladder"）：
+DFT 的精度完全取决于**交换关联泛函** $E_{\text{xc}}[\rho]$ 的近似形式。常用的泛函按精度递增分为几个层级（"Jacob's Ladder"）：
 
 | 层级 | 类型 | 代表泛函 | 特点 |
 |------|------|----------|------|
-| 1 | LDA (局域密度近似) | **PADE**, VWN, PZ | 只依赖 ρ(r)，最简单 |
-| 2 | GGA (广义梯度近似) | **PBE**, BLYP, PW91 | 依赖 ρ 和 ∇ρ |
-| 3 | meta-GGA | TPSS, SCAN | 依赖 ρ、∇ρ 和动能密度 |
+| 1 | LDA (局域密度近似) | **PADE**, VWN, PZ | 只依赖 $\rho(\mathbf{r})$，最简单 |
+| 2 | GGA (广义梯度近似) | **PBE**, BLYP, PW91 | 依赖 $\rho$ 和 $\nabla\rho$ |
+| 3 | meta-GGA | TPSS, SCAN | 依赖 $\rho$、$\nabla\rho$ 和动能密度 |
 | 4 | 杂化泛函 (Hybrid) | **B3LYP**, PBE0, HSE06 | 混入部分 Hartree-Fock 交换 |
 | 5 | 双杂化泛函 | B2PLYP | 混入 HF 交换和 MP2 关联 |
 
@@ -90,7 +84,7 @@ DFT 的精度完全取决于**交换关联泛函** E_xc[ρ] 的近似形式。�
 
 SCF 收敛的快慢取决于混合策略。常见方法：
 
-- **线性混合**：ρ_new = (1-α)ρ_old + α·ρ_new，简单但收敛慢
+- **线性混合**：$\rho_{\text{new}} = (1-\alpha)\rho_{\text{old}} + \alpha\cdot\rho_{\text{new}}$，简单但收敛慢
 - **Broyden 混合**：利用前几步的迭代信息，自适应地估计最优混合，收敛较快
 - **Pulay (DIIS) 混合**：直接反演迭代子空间方法，广泛使用
 
@@ -153,13 +147,11 @@ CP2K 提供两种 Quickstep 方法：
 
 ### 3.1 基组 (Basis Sets)
 
-在 DFT 计算中，分子轨道 φᵢ 用一组预定义的**基函数**的线性组合来展开：
+在 DFT 计算中，分子轨道 $\phi_i$ 用一组预定义的**基函数**的线性组合来展开：
 
-```
-φᵢ(r) = Σ_μ c_μᵢ χ_μ(r)
-```
+$$\phi_i(\mathbf{r}) = \sum_\mu c_{\mu i} \chi_\mu(\mathbf{r})$$
 
-其中 χ_μ(r) 是基函数，c_μᵢ 是展开系数。
+其中 $\chi_\mu(\mathbf{r})$ 是基函数，$c_{\mu i}$ 是展开系数。
 
 CP2K 使用**高斯型轨道 (GTO)** 作为基函数。GTO 的优点是多中心积分可以解析计算，速度快。
 

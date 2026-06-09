@@ -120,6 +120,29 @@ a:hover {
   text-decoration: none;
 }
 
+.nav-links .github-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--text-primary);
+  transition: color var(--transition), background var(--transition);
+  flex-shrink: 0;
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.nav-links .github-link:hover {
+  color: var(--accent);
+  background: var(--bg-tertiary);
+}
+
+.github-link svg {
+  display: block;
+}
+
 .theme-toggle {
   background: none;
   border: 1px solid var(--border);
@@ -1030,4 +1053,18 @@ a:hover {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+/* KaTeX math display */
+.katex-display {
+  margin: 1em 0;
+  overflow: visible;
+  max-width: 100%;
+}
+
+.katex {
+  font-size: 1.05em;
+}
+
+.chapter-content .katex-display {
+  padding: 0 4px;
 }

@@ -42,12 +42,9 @@ CP2K 的多网格系统由参数 `NGRIDS` 控制（默认值为 4），形成一
 
 每个网格层级的间距 (h) 是前一层的 1/α 倍，其中 α 是**递进因子 (progression factor)**，默认值为 3.0：
 
-```
-h₁ = h_最细 × α^(NGRIDS - 1)
-h₂ = h_最细 × α^(NGRIDS - 2)
-...
-h_最细 = h_最细
-```
+$$h_i = h_{\text{finest}} \times \alpha^{\text{NGRIDS} - i}$$
+
+其中 $i = 1, 2, \ldots, \text{NGRIDS}$，$\alpha \approx 2$ 是递进因子（refinement factor）。
 
 ### 1.3 高斯函数到网格的映射
 
@@ -58,9 +55,7 @@ h_最细 = h_最细
 
 具体的分配规则：一个高斯函数被放在满足以下条件的**最粗网格**上：
 
-```
-截断能 E_cut(网格) ≥ REL_CUTOFF × (4 × α_Gaussian / π)
-```
+$$E_{\text{cut}}(\text{grid}) \geq \text{REL\_CUTOFF} \times \frac{4\alpha_{\text{Gaussian}}}{\pi}$$
 
 即网格能够分辨该高斯函数的特征。这就是 `REL_CUTOFF` 的作用——它决定了高斯函数在不同网格间的分配方式。
 
@@ -83,9 +78,9 @@ h_最细 = h_最细
 
 `CUTOFF` 是最精细网格的**平面波截断能**，以 **Rydberg (Ry)** 为单位。它决定了实空间网格的分辨率：
 
-```
-网格间距 h = π / √(2 × CUTOFF)    (在原子单位中)
-```
+$$h = \frac{\pi}{\sqrt{2 \times \text{CUTOFF}}}$$
+
+（在原子单位中）
 
 或者用更直观的形式：
 
@@ -100,30 +95,26 @@ h ≈ π / √(2 × 300 × 0.3675) ≈ π / √(220.5) ≈ π / 14.85 ≈ 0.2114
 
 ### 2.2 CUTOFF 的物理意义
 
-在平面波基组中，截断能 E_cut 限定了平面波展开的最大波矢：
+在平面波基组中，截断能 $E_{\text{cut}}$ 限定了平面波展开的最大波矢：
 
-```
-G_max = √(2 × E_cut)
-```
+$$G_{\max} = \sqrt{2 \times E_{\text{cut}}}$$
 
-只有波矢 |G| ≤ G_max 的平面波分量才被包含。CUTOFF 越大：
+只有波矢 $|\mathbf{G}| \leq G_{\max}$ 的平面波分量才被包含。CUTOFF 越大：
 - 包含越多的高频分量
 - 网格越细（格点越密）
 - 描述电子密度的精度越高
-- 计算量越大（格点数正比于 CUTOFF^(3/2)）
+- 计算量越大（格点数正比于 $\text{CUTOFF}^{3/2}$）
 
 ### 2.3 CUTOFF 与各层网格截断能的关系
 
 各层网格的截断能由以下公式决定：
 
-```
-E_cut^(i) = E_cut^(1) / α^(i-1)
-```
+$$E_{\text{cut}}^{(i)} = \frac{E_{\text{cut}}^{(1)}}{\alpha^{i-1}}$$
 
 其中：
-- i = 1 为最粗网格，i = NGRIDS 为最细网格
-- α 是递进因子（默认 3.0）
-- E_cut^(NGRIDS) = CUTOFF（即输入中的 CUTOFF 值）
+- $i = 1$ 为最粗网格，$i = \text{NGRIDS}$ 为最细网格
+- $\alpha$ 是递进因子（默认 3.0）
+- $E_{\text{cut}}^{(\text{NGRIDS})} = \text{CUTOFF}$（即输入中的 CUTOFF 值）
 
 因此，当 α = 3.0，NGRIDS = 4，CUTOFF = 300 Ry 时：
 
@@ -159,9 +150,7 @@ E_cut^(i) = E_cut^(1) / α^(i-1)
 
 判断规则：一个高斯函数被分配到满足以下条件的最粗网格：
 
-```
-网格的有效截断能 ≥ REL_CUTOFF × ΔG_Gaussian
-```
+$$E_{\text{cut}}^{\text{eff}} \geq \text{REL\_CUTOFF} \times \Delta G_{\text{Gaussian}}$$
 
 其中 ΔG_Gaussian 与高斯函数的频率宽度相关。
 
@@ -240,12 +229,12 @@ REL_CUTOFF 的影响通常较小，且在 REL_CUTOFF ≥ 50-60 Ry 时很快饱�
 
 | 判据 | 含义 | 适用场景 |
 |------|------|----------|
-| ΔE < 1 meV/atom | 每原子能量变化 < 1 meV | 日常计算 |
-| ΔE < 0.1 meV/atom | 每原子能量变化 < 0.1 meV | 高精度计算 |
-| ΔE < 10⁻⁶ Ha | 总能量变化 < 10⁻⁶ Hartree | 严格基准 |
-| ΔF < 1 meV/Å | 力的变化很小 | 几何优化/MD |
+| $\Delta E < 1$ meV/atom | 每原子能量变化 < 1 meV | 日常计算 |
+| $\Delta E < 0.1$ meV/atom | 每原子能量变化 < 0.1 meV | 高精度计算 |
+| $\Delta E < 10^{-6}$ Ha | 总能量变化 < 10⁻⁶ Hartree | 严格基准 |
+| $\Delta F < 1$ meV/Å | 力的变化很小 | 几何优化/MD |
 
-对于初步测试，ΔE < 1 meV 通常已经足够。对于严格的基准计算或振动频率分析，需要更严格的判据。
+对于初步测试，$\Delta E < 1$ meV 通常已经足够。对于严格的基准计算或振动频率分析，需要更严格的判据。
 
 ---
 
@@ -340,19 +329,15 @@ REL_CUTOFF 的影响通常较小，且在 REL_CUTOFF ≥ 50-60 Ry 时很快饱�
 
 最直接的判据是相邻 CUTOFF 值之间的总能量差：
 
-```
-ΔE = E(CUTOFF_n) - E(CUTOFF_{n-1})
-```
+$$\Delta E = E(\text{CUTOFF}_n) - E(\text{CUTOFF}_{n-1})$$
 
-当 |ΔE| < 阈值时，认为 CUTOFF 已收敛。
+当 $|\Delta E| <$ 阈值时，认为 CUTOFF 已收敛。
 
 ### 6.2 每原子能量差
 
 对于不同大小的体系，使用每原子能量差更为公平：
 
-```
-ΔE_per_atom = ΔE / N_atoms
-```
+$$\Delta E_{\text{per atom}} = \frac{\Delta E}{N_{\text{atoms}}}$$
 
 ### 6.3 常用阈值
 
@@ -363,15 +348,13 @@ REL_CUTOFF 的影响通常较小，且在 REL_CUTOFF ≥ 50-60 Ry 时很快饱�
 | 严格 | 10⁻⁶ | 0.0272 | 27.2 |
 | 极严格 | 10⁻⁷ | 0.00272 | 2.72 |
 
-**推荐**：对于 CUTOFF 收敛测试，使用 ΔE < 10⁻⁵ Ha（约 0.27 meV）作为收敛判据。这意味着进一步增大 CUTOFF 不会改变总能量超过 0.27 meV。
+**推荐**：对于 CUTOFF 收敛测试，使用 $\Delta E < 10^{-5}$ Ha（约 0.27 meV）作为收敛判据。这意味着进一步增大 CUTOFF 不会改变总能量超过 0.27 meV。
 
 ### 6.4 力的收敛
 
 除了能量，还应检查力的收敛：
 
-```
-ΔF_max = max|F_i(CUTOFF_n) - F_i(CUTOFF_{n-1})|
-```
+$$\Delta F_{\max} = \max_i |F_i(\text{CUTOFF}_n) - F_i(\text{CUTOFF}_{n-1})|$$
 
 对于几何优化和分子动力学，力的收敛可能比能量收敛需要更高的 CUTOFF。
 
@@ -462,8 +445,8 @@ Python 脚本，用于可视化收敛数据：
 
 1. 读取 `.dat` 数据文件
 2. 绘制总能量 vs 参数曲线
-3. 绘制能量差 |ΔE| vs 参数曲线（对数坐标）
-4. 标注收敛阈值线（1 meV 和 10⁻⁶ Ha）
+3. 绘制能量差 $|\Delta E|$ vs 参数曲线（对数坐标）
+4. 标注收敛阈值线（1 meV 和 $10^{-6}$ Ha）
 5. 纯文本输出（无 matplotlib 时的回退方案）
 
 #### 使用方法
@@ -481,10 +464,10 @@ python plot_convergence.py --data cutoff_results.dat --output my_convergence
 
 #### 输出
 
-- 终端文本表格（始终输出，包含能量和 ΔE 列表）
+- 终端文本表格（始终输出，包含能量和 $\Delta E$ 列表）
 - `cutoff_convergence.png`（或自定义名称）：包含两个子图的收敛曲线
   - 上图：总能量 vs 参数
-  - 下图：|ΔE| vs 参数（对数坐标，含阈值线）
+  - 下图：$|\Delta E|$ vs 参数（对数坐标，含阈值线）
 
 #### 依赖
 
@@ -626,9 +609,9 @@ NGRIDS:     4（默认值，通常不需要修改）
 | CUTOFF | 最细网格的截断能，决定网格分辨率 |
 | REL_CUTOFF | 参考截断能，控制高斯函数到网格的分配 |
 | NGRIDS | 网格层数，默认 4 |
-| α 因子 | 相邻网格的截断能比，默认 3.0 |
+| $\alpha$ 因子 | 相邻网格的截断能比，默认 3.0 |
 | 收敛策略 | 先固定 REL_CUTOFF 扫 CUTOFF，再确认 REL_CUTOFF |
-| 收敛判据 | ΔE < 10⁻⁵ Ha（约 0.27 meV）或 ΔE < 1 meV/atom |
+| 收敛判据 | $\Delta E < 10^{-5}$ Ha（约 0.27 meV）或 $\Delta E < 1$ meV/atom |
 | 典型值 | s/p 元素用 300 Ry，d 金属用 500 Ry |
 
 ---

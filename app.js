@@ -304,10 +304,53 @@ async function loadChapterContent(ch) {
   contentEl.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:60px 0;">加载中...</p>';
 
   try {
-    const url = `../${ch.folder}/${ch.file}`;
+    const url = `${ch.folder}/${ch.file}`;
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     let md = await resp.text();
+
+    // Pre-process LaTeX math: protect code blocks first, then render math
+    const mathBlocks = [];
+    const codeBlocks = [];
+
+    // Step 1: Protect fenced code blocks (```...```)
+    md = md.replace(/(```[\s\S]*?```)/g, (match) => {
+      const idx = codeBlocks.length;
+      codeBlocks.push(match);
+      return `CODEBLOCK_${idx}_PROTECT`;
+    });
+    // Step 2: Protect inline code (`...`)
+    md = md.replace(/(`[^`\n]+`)/g, (match) => {
+      const idx = codeBlocks.length;
+      codeBlocks.push(match);
+      return `CODEBLOCK_${idx}_PROTECT`;
+    });
+
+    // Step 3: Block math $$...$$
+    md = md.replace(/\$\$([\s\S]+?)\$\$/g, (match, tex) => {
+      const idx = mathBlocks.length;
+      try {
+        mathBlocks.push(katex.renderToString(tex.trim(), { displayMode: true, throwOnError: false }));
+      } catch (e) {
+        mathBlocks.push(`<pre class="math-error">${tex}</pre>`);
+      }
+      return `MATHBLOCK_${idx}_PLACEHOLDER`;
+    });
+    // Step 4: Inline math $...$ (but not $$)
+    md = md.replace(/(?<!\$)\$(?!\$)((?:[^$\\]|\\.)+?)\$(?!\$)/g, (match, tex) => {
+      const idx = mathBlocks.length;
+      try {
+        mathBlocks.push(katex.renderToString(tex.trim(), { displayMode: false, throwOnError: false }));
+      } catch (e) {
+        mathBlocks.push(`<code>${tex}</code>`);
+      }
+      return `MATHBLOCK_${idx}_PLACEHOLDER`;
+    });
+
+    // Step 5: Restore code blocks (before marked parses)
+    md = md.replace(/CODEBLOCK_(\d+)_PROTECT/g, (match, idx) => {
+      return codeBlocks[parseInt(idx)];
+    });
 
     // Configure marked
     marked.setOptions({
@@ -323,12 +366,41 @@ async function loadChapterContent(ch) {
 
     let html = marked.parse(md);
 
+    // Restore math blocks
+    html = html.replace(/MATHBLOCK_(\d+)_PLACEHOLDER/g, (match, idx) => {
+      return mathBlocks[parseInt(idx)];
+    });
+
     // Add copy buttons to code blocks
     html = html.replace(/<pre><code(.*?)>([\s\S]*?)<\/code><\/pre>/g, (match, attrs, code) => {
       return `<div class="code-block-wrapper"><button class="copy-btn" onclick="copyCode(this)">复制</button><pre><code${attrs}>${code}</code></pre></div>`;
     });
 
     contentEl.innerHTML = html;
+
+    // Scale down wide KaTeX display formulas to fit container
+    contentEl.querySelectorAll('.katex-display').forEach(el => {
+      const parent = el.parentElement;
+      if (!parent) return;
+      const maxW = parent.clientWidth;
+      // Use a wrapper to handle layout correctly after scaling
+      const w = el.scrollWidth;
+      if (w > maxW) {
+        const ratio = maxW / w;
+        const wrapper = document.createElement('div');
+        wrapper.style.overflow = 'hidden';
+        wrapper.style.maxWidth = '100%';
+        wrapper.style.margin = '1em 0';
+        el.parentNode.insertBefore(wrapper, el);
+        wrapper.appendChild(el);
+        el.style.transform = `scale(${ratio})`;
+        el.style.transformOrigin = 'top center';
+        el.style.width = `${100 / ratio}%`;
+        el.style.margin = '0';
+        // Let wrapper height be determined by scaled content
+        wrapper.style.height = `${el.offsetHeight * ratio}px`;
+      }
+    });
 
     // Add glossary tooltips to key terms
     addGlossaryTooltips(contentEl);
