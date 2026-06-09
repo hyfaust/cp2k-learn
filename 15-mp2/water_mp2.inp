@@ -1,0 +1,141 @@
+!=======================================================================
+! 第15章：水二聚体 PBE0 杂化泛函计算
+! Water Dimer PBE0 Hybrid Functional Calculation
+!
+! 计算内容：水二聚体的 PBE0 杂化泛函能量
+! 方法：PBE0 (25% 精确交换) + DZVP-GTH 基组
+! 对比：PBE (0% 精确交换) vs PBE0 (25%) vs HF (100%)
+!
+! 注意：原教程设计使用 RI-MP2，但所需基组 (cc-DZ, RI_cc-DZ,
+!       GTH-HF) 不在本安装中。改为 PBE0 杂化泛函演示精确交换。
+!=======================================================================
+
+&GLOBAL
+  PROJECT water_mp2
+  RUN_TYPE ENERGY
+  PRINT_LEVEL MEDIUM
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD Quickstep
+
+  &DFT
+    BASIS_SET_FILE_NAME  BASIS_SET
+    POTENTIAL_FILE_NAME  GTH_POTENTIALS
+
+    &MGRID
+      CUTOFF 500                            ! 截断能 (Ry)
+      REL_CUTOFF 60
+      NGRIDS 4
+    &END MGRID
+
+    &QS
+      EPS_DEFAULT 1.0E-12
+      EXTRAPOLATION ASPC
+      EXTRAPOLATION_ORDER 3
+    &END QS
+
+    &SCF
+      EPS_SCF 1.0E-8
+      MAX_SCF 200
+      &OUTER_SCF
+        EPS_SCF 1.0E-8
+        MAX_SCF 20
+      &END OUTER_SCF
+      &OT
+        MINIMIZER DIIS
+        PRECONDITIONER FULL_ALL
+      &END OT
+    &END SCF
+
+    ! ----------------------------------------------------------------
+    ! PBE0 杂化泛函：25% 精确 (HF) 交换 + 75% PBE 交换 + 100% PBE 关联
+    ! PBE0 是最常用的杂化泛函之一，精度优于纯 PBE
+    ! ----------------------------------------------------------------
+    &XC
+      &XC_FUNCTIONAL PBE0
+      &END XC_FUNCTIONAL
+      &HF
+        FRACTION 0.25                      ! 25% 精确交换 (PBE0 标准值)
+        &SCREENING
+          EPS_SCHWARZ 1.0E-7               ! Schwarz 筛选阈值
+          SCREEN_ON_INITIAL_P .TRUE.
+        &END SCREENING
+        &INTERACTION_POTENTIAL
+          POTENTIAL_TYPE TRUNCATED          ! 截断库仑势（周期体系）
+          CUTOFF_RADIUS 6.0                 ! 截断半径 (Angstrom)
+          T_C_G_DATA t_c_g.dat             ! 截断库仑势数据文件
+        &END INTERACTION_POTENTIAL
+        &MEMORY
+          MAX_MEMORY 2000                   ! HF 内存限制 (MB)
+          EPS_STORAGE_SCALING 0.1
+        &END MEMORY
+      &END HF
+    &END XC
+
+    &PRINT
+      &MO_CUBES
+        NHOMO 4
+        NLUMO 4
+      &END MO_CUBES
+    &END PRINT
+
+  &END DFT
+
+  &SUBSYS
+    &CELL
+      ABC 12.0 12.0 12.0                    ! 大盒子避免镜像相互作用
+    &END CELL
+
+    &COORD
+      ! 水二聚体几何构型
+      ! 供体水分子 (Donor)
+      O1   0.000   0.000   0.117
+      H1   0.000   0.757  -0.469
+      H2   0.000  -0.757  -0.469
+      ! 受体水分子 (Acceptor) - 通过氢键结合
+      O2   2.800   0.000   0.000
+      H3   3.100   0.700   0.500
+      H4   3.100  -0.700   0.500
+    &END COORD
+
+    &KIND O
+      BASIS_SET DZVP-GTH-PADE
+      POTENTIAL GTH-PADE-q6
+    &END KIND
+
+    &KIND H
+      BASIS_SET DZVP-GTH-PADE
+      POTENTIAL GTH-PADE-q1
+    &END KIND
+
+  &END SUBSYS
+
+&END FORCE_EVAL
+
+!=======================================================================
+! 说明：
+!
+! 1. PBE0 杂化泛函包含 25% 的 Hartree-Fock 精确交换
+!    这比纯 PBE (0% 精确交换) 更准确，尤其对于：
+!    - 反应能垒
+!    - 带隙
+!    - 氢键强度
+!
+! 2. &XC_FUNCTIONAL PBE0 是 CP2K 内置的快捷方式
+!    等价于: PBE 交换 × 0.75 + HF 交换 × 0.25 + PBE 关联 × 1.0
+!
+! 3. 杂化泛函需要计算精确交换积分，计算成本比纯 DFT 高 3-10 倍
+!    EPS_SCHWARZ 和 MAX_MEMORY 参数控制效率
+!
+! 4. 截断库仑势 (TRUNCATED) 用于周期体系
+!    避免镜像之间的虚假交换相互作用
+!
+! 5. 运行需要较多内存，建议每个进程至少 2-4 GB
+!
+! 6. 可选进阶计算：
+!    - BSSE 校正：分别计算单体 A 和单体 B（含 ghost 原子）
+!    - 比较 PBE vs PBE0 vs B3LYP 的氢键能
+!    - 基组收敛测试：SZV → DZVP → TZV2P
+!    - 如果有 cc-DZ/RI_cc-DZ 基组，可做 RI-MP2 计算
+!=======================================================================

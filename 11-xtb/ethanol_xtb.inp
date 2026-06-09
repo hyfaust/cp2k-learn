@@ -1,0 +1,62 @@
+&GLOBAL
+  PROJECT ethanol_xtb
+  RUN_TYPE GEO_OPT
+  PRINT_LEVEL LOW
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD Quickstep
+
+  &DFT
+    &QS
+      METHOD XTB
+      &XTB
+        DO_EWALD .FALSE.
+        USE_HALOGEN_CORRECTION .TRUE.
+        CHECK_ATOMIC_CHARGES .TRUE.
+      &END XTB
+    &END QS
+
+    &SCF
+      SCF_GUESS ATOMIC
+      EPS_SCF 1.0E-6
+      MAX_SCF 50
+      &OT
+        MINIMIZER DIIS
+        PRECONDITIONER FULL_ALL
+      &END OT
+    &END SCF
+  &END DFT
+
+  &SUBSYS
+    &CELL
+      ABC 15.0 15.0 15.0
+    &END CELL
+    &TOPOLOGY
+      CONNECTIVITY OFF
+    &END TOPOLOGY
+    &COORD
+      C    0.000   0.000   0.000
+      C    1.520   0.000   0.000
+      O    2.020   1.340   0.000
+      H    2.920   1.340   0.000
+      H   -0.510   0.510   0.890
+      H   -0.510   0.510  -0.890
+      H   -0.510  -1.020   0.000
+      H    1.920  -0.530   0.890
+      H    1.920  -0.530  -0.890
+    &END COORD
+  &END SUBSYS
+&END FORCE_EVAL
+
+&MOTION
+  &GEO_OPT
+    TYPE MINIMIZATION
+    OPTIMIZER BFGS
+    MAX_ITER 200
+    MAX_DR    1.0E-03
+    MAX_FORCE 1.0E-03
+    RMS_DR    1.0E-03
+    RMS_FORCE 1.0E-03
+  &END GEO_OPT
+&END MOTION

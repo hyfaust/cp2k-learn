@@ -1,0 +1,38 @@
+# Qwen Code
+.qwen/
+
+# CP2K output / runtime files
+*.out
+*.log
+*.wfn
+*.wfn.bak-*
+*.restart
+*.restart.bak-*
+*.cube
+*.Hessian
+*.hess
+*.eig
+*.mol
+*.bs
+*-frc-*.xyz
+*-pos-*.xyz
+*-vel-*.xyz
+*-1.cell
+*-1.ener
+*-1.restart
+*.metadynLog
+core*
+
+# Test input copies
+*_test*.inp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/

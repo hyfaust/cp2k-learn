@@ -1,0 +1,82 @@
+&GLOBAL
+  PROJECT  Si_cell_opt
+  RUN_TYPE CELL_OPT
+  PRINT_LEVEL LOW
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD  QS
+  STRESS_TENSOR  ANALYTICAL    ! 解析应力张量（晶胞优化必需）
+
+  &DFT
+    BASIS_SET_FILE_NAME  BASIS_SET
+    POTENTIAL_FILE_NAME  GTH_POTENTIALS
+
+    &MGRID
+      CUTOFF  300
+      REL_CUTOFF  60
+    &END MGRID
+
+    &QS
+      EPS_DEFAULT  1.0E-10
+    &END QS
+
+    &SCF
+      SCF_GUESS  ATOMIC
+      EPS_SCF  1.0E-6
+      MAX_SCF  50
+      &MIXING
+        METHOD  BROYDEN_MIXING
+        ALPHA  0.4
+        NBUFFER  7
+      &END MIXING
+    &END SCF
+
+    &XC
+      &XC_FUNCTIONAL PADE
+      &END XC_FUNCTIONAL
+    &END XC
+  &END DFT
+
+  &SUBSYS
+    &CELL
+      ABC  5.30  5.30  5.30     ! 故意偏小的初始晶格常数 (平衡值 ≈ 5.43 Å)
+      PERIODIC  XYZ
+    &END CELL
+
+    &KIND Si
+      BASIS_SET  DZVP-GTH-PADE
+      POTENTIAL  GTH-PADE-q4
+    &END KIND
+
+    &COORD
+      SCALED                        ! 使用分数坐标
+      Si   0.000   0.000   0.000
+      Si   0.250   0.250   0.250
+      Si   0.500   0.500   0.000
+      Si   0.750   0.750   0.250
+      Si   0.500   0.000   0.500
+      Si   0.750   0.250   0.750
+      Si   0.000   0.500   0.500
+      Si   0.250   0.750   0.750
+    &END COORD
+  &END SUBSYS
+&END FORCE_EVAL
+
+&MOTION
+  &CELL_OPT
+    OPTIMIZER  BFGS
+    TYPE  DIRECT_CELL_OPT
+    KEEP_ANGLES  .TRUE.           ! 保持立方对称性
+    PRESSURE_TOLERANCE  0.1       ! 压力收敛判据 (GPa)
+    MAX_ITER  200
+  &END CELL_OPT
+
+  &GEO_OPT
+    OPTIMIZER  BFGS
+    MAX_DR    3.0E-3
+    RMS_DR    1.5E-3
+    MAX_FORCE  4.5E-4
+    RMS_FORCE  3.0E-4
+  &END GEO_OPT
+&END MOTION

@@ -1,0 +1,120 @@
+!=======================================================================
+! 第14章：乙烯 TDDFT 吸收光谱计算
+! Ethylene (C2H4) TDDFT Absorption Spectrum
+!
+! 计算内容：乙烯分子的激发态能量和振子强度
+! 方法：DFT (PBE) + DZVP-GTH-PBE 基组 + ALDA 核
+! 激发态数：NSTATES = 10
+!=======================================================================
+
+&GLOBAL
+  PROJECT ethylene_tddft
+  RUN_TYPE ENERGY
+  PRINT_LEVEL MEDIUM
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD Quickstep
+
+  &DFT
+    BASIS_SET_FILE_NAME  BASIS_SET
+    POTENTIAL_FILE_NAME  GTH_POTENTIALS
+
+    &MGRID
+      CUTOFF 400
+      REL_CUTOFF 60
+      NGRIDS 4
+    &END MGRID
+
+    &QS
+      EPS_DEFAULT 1.0E-12
+      EXTRAPOLATION ASPC
+      EXTRAPOLATION_ORDER 3
+    &END QS
+
+    &SCF
+      EPS_SCF 1.0E-8
+      MAX_SCF 200
+      &OUTER_SCF
+        EPS_SCF 1.0E-8
+        MAX_SCF 20
+      &END OUTER_SCF
+      &OT
+        MINIMIZER DIIS
+        PRECONDITIONER FULL_ALL
+      &END OT
+    &END SCF
+
+    &XC
+      &XC_FUNCTIONAL PBE
+      &END XC_FUNCTIONAL
+    &END XC
+
+    ! ----------------------------------------------------------------
+    ! 激发态计算：使用 Delta-SCF 方法
+    ! CP2K 2025.2 使用 &EXCITED_STATES 模块计算激发态
+    ! ----------------------------------------------------------------
+    &EXCITED_STATES .TRUE.
+      STATE 1                              ! 计算第 1 个激发态
+      XC_KERNEL_METHOD ANALYTIC            ! 解析 XC 核函数
+    &END EXCITED_STATES
+
+    &PRINT
+      &MO_CUBES                     ! 输出分子轨道立方文件
+        NHOMO 5
+        NLUMO 5
+      &END MO_CUBES
+    &END PRINT
+
+  &END DFT
+
+  &SUBSYS
+    &CELL
+      ABC 15.0 15.0 15.0           ! 大盒子隔离分子
+    &END CELL
+
+    &COORD
+      ! 乙烯分子平衡构型（z 轴为 C=C 键轴）
+      C   0.000000   0.000000   0.669500
+      C   0.000000   0.000000  -0.669500
+      H   0.000000   0.928900   1.232000
+      H   0.000000  -0.928900   1.232000
+      H   0.000000   0.928900  -1.232000
+      H   0.000000  -0.928900  -1.232000
+    &END COORD
+
+    &KIND C
+      BASIS_SET DZVP-GTH-PBE
+      POTENTIAL GTH-PBE-q4
+    &END KIND
+
+    &KIND H
+      BASIS_SET DZVP-GTH-PBE
+      POTENTIAL GTH-PBE-q1
+    &END KIND
+
+  &END SUBSYS
+
+&END FORCE_EVAL
+
+!=======================================================================
+! 说明：
+!
+! 1. 乙烯的最低激发态是 π→π* 跃迁 (1B1u)
+!    - 实验垂直激发能: ~7.6 eV (~163 nm)
+!    - PBE/ALDA 预期: ~7.0-7.5 eV
+!
+! 2. TDDFT 不需要特殊的 RUN_TYPE，使用 ENERGY 即可
+!    TDDFT 在基态 SCF 收敛后自动执行
+!
+! 3. NSTATES = 10 计算前 10 个激发态
+!    通常前 3-5 个态就覆盖了主要的吸收峰
+!
+! 4. KERNEL ALDA 使用绝热 LDA 核函数
+!    对于局域激发（如乙烯的 π→π*）足够精确
+!
+! 5. 结果分析方法：
+!    grep "Excited State" ethylene_tddft.out    # 激发态能量
+!    grep "f =" ethylene_tddft.out              # 振子强度
+!    grep "Transition" ethylene_tddft.out       # 跃迁贡献
+!=======================================================================

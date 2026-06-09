@@ -1,0 +1,147 @@
+@SET SYSTEM alanine_dipeptide_meta
+
+&GLOBAL
+  PROJECT ${SYSTEM}
+  RUN_TYPE MD
+  PRINT_LEVEL MEDIUM
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD Quickstep
+
+  &DFT
+    &QS
+      METHOD xTB
+      &xTB
+        CHECK_ATOMIC_CHARGES .FALSE.
+        DO_EWALD .FALSE.
+      &END xTB
+    &END QS
+
+    &SCF
+      MAX_SCF 200
+      SCF_GUESS ATOMIC
+      EPS_SCF 1.0E-4
+      IGNORE_CONVERGENCE_FAILURE
+      &OT
+        PRECONDITIONER FULL_SINGLE_INVERSE
+        MINIMIZER CG
+      &END OT
+    &END SCF
+
+    &POISSON
+      PERIODIC NONE
+      POISSON_SOLVER WAVELET
+    &END POISSON
+
+  &END DFT
+
+  &SUBSYS
+    &CELL
+      ABC 20.0 20.0 20.0
+      PERIODIC NONE
+    &END CELL
+
+    &TOPOLOGY
+      COORD_FILE_NAME ala_dipeptide.xyz
+      COORD_FILE_FORMAT XYZ
+      CONNECTIVITY OFF
+    &END TOPOLOGY
+
+    &KIND C
+      BASIS_SET DZVP-MOLOPT-GTH
+      POTENTIAL GTH-PBE-q4
+    &END KIND
+    &KIND H
+      BASIS_SET DZVP-MOLOPT-GTH
+      POTENTIAL GTH-PBE-q1
+    &END KIND
+    &KIND N
+      BASIS_SET DZVP-MOLOPT-GTH
+      POTENTIAL GTH-PBE-q5
+    &END KIND
+    &KIND O
+      BASIS_SET DZVP-MOLOPT-GTH
+      POTENTIAL GTH-PBE-q6
+    &END KIND
+
+    ! ================================================
+    ! Collective Variable 1: Phi dihedral angle
+    ! C(羰基1) - N(肽键1) - Cα - C(羰基2)
+    ! 原子编号取决于具体的XYZ文件
+    ! 请根据实际结构确认原子索引
+    ! ================================================
+    &COLVAR
+      &TORSION
+        ATOMS 2 4 6 10
+      &END TORSION
+    &END COLVAR
+
+    ! ================================================
+    ! Collective Variable 2: Psi dihedral angle
+    ! N(肽键1) - Cα - C(羰基2) - N(肽键2)
+    ! 原子编号取决于具体的XYZ文件
+    ! 请根据实际结构确认原子索引
+    ! ================================================
+    &COLVAR
+      &TORSION
+        ATOMS 4 6 10 12
+      &END TORSION
+    &END COLVAR
+
+  &END SUBSYS
+
+&END FORCE_EVAL
+
+&MOTION
+  &MD
+    ENSEMBLE NVE
+    TEMPERATURE 300.0
+    TIMESTEP 1.0
+    STEPS 100000
+  &END MD
+
+  &FREE_ENERGY
+    &METADYN
+      ! 高斯沉积设置
+      DO_HILLS .TRUE.
+      NT_HILLS 50
+      WW 0.001
+      ! Well-Tempered Metadynamics (推荐)
+      WELL_TEMPERED .TRUE.
+      DELTA_T 1200.0
+
+      ! CV 1: Phi dihedral angle
+      &METAVAR
+        COLVAR 1
+        SCALE 0.1
+      &END METAVAR
+
+      ! CV 2: Psi dihedral angle
+      &METAVAR
+        COLVAR 2
+        SCALE 0.1
+      &END METAVAR
+
+    &END METADYN
+  &END FREE_ENERGY
+
+  &PRINT
+    &TRAJECTORY
+      FORMAT XYZ
+      &EACH
+        MD 100
+      &END EACH
+    &END TRAJECTORY
+    &VELOCITIES OFF
+    &END VELOCITIES
+    &FORCES OFF
+    &END FORCES
+    &RESTART
+      &EACH
+        MD 5000
+      &END EACH
+    &END RESTART
+  &END PRINT
+
+&END MOTION

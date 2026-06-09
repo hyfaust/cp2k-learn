@@ -1,0 +1,110 @@
+!=======================================================================
+! 第13章：水分子振动分析
+! H2O Vibrational Analysis
+!
+! 计算内容：水分子的振动频率和简正模式
+! 方法：DFT (PADE/LDA) + DZVP-GTH 基组
+! 位移步长：DX = 0.01 bohr
+!=======================================================================
+
+&GLOBAL
+  PROJECT H2O_vib
+  RUN_TYPE VIBRATIONAL_ANALYSIS
+  PRINT_LEVEL MEDIUM
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD Quickstep
+
+  &DFT
+    BASIS_SET_FILE_NAME  BASIS_SET
+    POTENTIAL_FILE_NAME  GTH_POTENTIALS
+
+    &MGRID
+      CUTOFF 400
+      REL_CUTOFF 60
+      NGRIDS 4
+    &END MGRID
+
+    &QS
+      EPS_DEFAULT 1.0E-12
+      EXTRAPOLATION ASPC
+      EXTRAPOLATION_ORDER 3
+    &END QS
+
+    &SCF
+      EPS_SCF 1.0E-8
+      MAX_SCF 50
+      &OUTER_SCF
+        EPS_SCF 1.0E-8
+        MAX_SCF 10
+      &END OUTER_SCF
+      &OT
+        MINIMIZER DIIS
+        PRECONDITIONER FULL_ALL
+      &END OT
+    &END SCF
+
+    &XC
+      &XC_FUNCTIONAL PADE
+      &END XC_FUNCTIONAL
+    &END XC
+
+    &PRINT
+      &MOMENTS
+        PERIODIC .FALSE.
+      &END MOMENTS
+    &END PRINT
+
+  &END DFT
+
+  &SUBSYS
+    &CELL
+      ABC 10.0 10.0 10.0
+    &END CELL
+
+    &TOPOLOGY
+      COORD_FILE_FORMAT XYZ
+      COORD_FILE_NAME H2O.xyz
+    &END TOPOLOGY
+
+    &KIND H
+      BASIS_SET DZVP-GTH-PADE
+      POTENTIAL GTH-PADE-q1
+    &END KIND
+
+    &KIND O
+      BASIS_SET DZVP-GTH-PADE
+      POTENTIAL GTH-PADE-q6
+    &END KIND
+
+  &END SUBSYS
+
+&END FORCE_EVAL
+
+&VIBRATIONAL_ANALYSIS
+  DX 0.01
+  &PRINT
+    &PROGRAM_RUN_INFO ON
+    &END PROGRAM_RUN_INFO
+    &ROTATIONAL_INFO ON
+    &END ROTATIONAL_INFO
+  &END PRINT
+&END VIBRATIONAL_ANALYSIS
+
+!=======================================================================
+! 说明：
+! 1. 如果没有 H2O.xyz 文件，可以在 COORD 部分直接写坐标：
+!
+!    &COORD
+!      O   0.000000   0.000000   0.117349
+!      H   0.000000   0.757160  -0.469396
+!      H   0.000000  -0.757160  -0.469396
+!    &END COORD
+!
+! 2. 确保使用与振动分析相同的方法做几何优化
+! 3. 水分子实验振动频率（cm^-1）：
+!    - 对称伸缩: 3657
+!    - 弯曲:      1595
+!    - 反对称伸缩: 3756
+!=======================================================================

@@ -1,0 +1,142 @@
+!=======================================================================
+! 第16章：硅能带结构计算
+! Silicon (Si) Band Structure Calculation
+!
+! 计算内容：体硅的电子能带结构
+! 方法：DFT (PBE) + DZVP-GTH 基组
+! 结构：金刚石结构 Si，8 原子/单胞
+! k 点路径：Γ → X → W → L → Γ → K
+!
+! 注意：原教程设计使用 G0W0 准粒子修正，但所需基组 (cc-DZ,
+!       RI_cc-DZ, GTH-HF) 不在本安装中。改为能带结构计算。
+!=======================================================================
+
+&GLOBAL
+  PROJECT silicon_gw
+  RUN_TYPE ENERGY
+  PRINT_LEVEL MEDIUM
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD Quickstep
+
+  &DFT
+    BASIS_SET_FILE_NAME  BASIS_SET
+    POTENTIAL_FILE_NAME  GTH_POTENTIALS
+
+    &MGRID
+      CUTOFF 600                            ! 截断能 (Ry)
+      REL_CUTOFF 60
+      NGRIDS 5
+    &END MGRID
+
+    &QS
+      EPS_DEFAULT 1.0E-12
+      EXTRAPOLATION ASPC
+      EXTRAPOLATION_ORDER 3
+    &END QS
+
+    &SCF
+      EPS_SCF 1.0E-8
+      MAX_SCF 200
+      &OUTER_SCF
+        EPS_SCF 1.0E-8
+        MAX_SCF 20
+      &END OUTER_SCF
+      &OT
+        MINIMIZER DIIS
+        PRECONDITIONER FULL_ALL
+      &END OT
+    &END SCF
+
+    &XC
+      &XC_FUNCTIONAL PBE
+      &END XC_FUNCTIONAL
+    &END XC
+
+    &PRINT
+      ! ----------------------------------------------------------------
+      ! 能带结构计算
+      ! 沿高对称 k 点路径计算能带
+      ! ----------------------------------------------------------------
+      &BAND_STRUCTURE
+        FILE_NAME silicon_band.bs
+        &KPOINT_SET
+          SPECIAL_POINT GAMMA   0.000  0.000  0.000
+          SPECIAL_POINT X       0.500  0.000  0.500
+          SPECIAL_POINT W       0.500  0.250  0.750
+          SPECIAL_POINT L       0.500  0.500  0.500
+          SPECIAL_POINT GAMMA   0.000  0.000  0.000
+          SPECIAL_POINT K       0.375  0.375  0.750
+          NPOINTS 30                        ! 每段 30 个 k 点
+        &END KPOINT_SET
+        &KPOINT_SET
+          SPECIAL_POINT GAMMA   0.000  0.000  0.000
+          SPECIAL_POINT X       0.500  0.000  0.500
+          NPOINTS 30
+        &END KPOINT_SET
+      &END BAND_STRUCTURE
+
+      &MO_CUBES
+        NHOMO 4
+        NLUMO 4
+      &END MO_CUBES
+    &END PRINT
+
+  &END DFT
+
+  &SUBSYS
+    &CELL
+      ! 硅晶格常数 a = 5.43 Angstrom
+      ! 金刚石结构：FCC + 2 原子基
+      ABC 5.43 5.43 5.43
+    &END CELL
+
+    &COORD
+      ! 金刚石结构 Si：8 原子/单胞
+      ! 使用分数坐标 (SCALED)
+      SCALED
+      Si   0.00  0.00  0.00
+      Si   0.50  0.50  0.00
+      Si   0.50  0.00  0.50
+      Si   0.00  0.50  0.50
+      Si   0.25  0.25  0.25
+      Si   0.75  0.75  0.25
+      Si   0.75  0.25  0.75
+      Si   0.25  0.75  0.75
+    &END COORD
+
+    &KIND Si
+      BASIS_SET DZVP-GTH-PADE
+      POTENTIAL GTH-PADE-q4
+    &END KIND
+
+  &END SUBSYS
+
+&END FORCE_EVAL
+
+!=======================================================================
+! 说明：
+!
+! 1. 能带结构是凝聚态物理的核心概念
+!    通过沿高对称 k 点路径计算 Kohn-Sham 本征值
+!
+! 2. 硅的能带结构特征：
+!    - 间接带隙：价带顶在 Γ 点，导带底在 X-Γ 线上
+!    - PBE 预测带隙 ~0.6 eV（严重低估，实验值 1.17 eV）
+!    - 杂化泛函 (PBE0, HSE06) 可改善带隙预测
+!
+! 3. 高对称 k 点路径 (FCC 晶格)：
+!    Γ(0,0,0) → X(0.5,0,0.5) → W(0.5,0.25,0.75) →
+!    L(0.5,0.5,0.5) → Γ(0,0,0) → K(0.375,0.375,0.75)
+!
+! 4. 结果文件 silicon_band.bs 包含能带数据
+!    可用 Python/matplotlib 绘制能带图
+!
+! 5. 进阶计算建议：
+!    a. 使用 PBE0 或 HSE06 杂化泛函改善带隙
+!    b. 增加 k 点密度 (NPOINTS 50-100)
+!    c. 增大基组做基组收敛测试
+!    d. 计算态密度 (DOS)
+!    e. 如果有 GW 基组，可做 G0W0 准粒子修正
+!=======================================================================

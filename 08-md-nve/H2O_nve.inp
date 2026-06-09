@@ -1,0 +1,96 @@
+&GLOBAL
+  PROJECT  H2O_nve
+  RUN_TYPE MD
+  PRINT_LEVEL LOW
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD  QS
+
+  &DFT
+    BASIS_SET_FILE_NAME  BASIS_SET
+    POTENTIAL_FILE_NAME  GTH_POTENTIALS
+
+    &MGRID
+      CUTOFF  300
+      REL_CUTOFF  60
+    &END MGRID
+
+    &QS
+      EPS_DEFAULT  1.0E-10
+      EXTRAPOLATION  PS             ! 多项式密度外推（MD 推荐）
+      EXTRAPOLATION_ORDER  3        ! 使用前 3 步信息
+    &END QS
+
+    &SCF
+      SCF_GUESS  ATOMIC
+      EPS_SCF  1.0E-6
+      MAX_SCF  50
+      &MIXING
+        METHOD  BROYDEN_MIXING
+        ALPHA  0.4
+        NBUFFER  7
+      &END MIXING
+    &END SCF
+
+    &XC
+      &XC_FUNCTIONAL PADE
+      &END XC_FUNCTIONAL
+    &END XC
+  &END DFT
+
+  &SUBSYS
+    &CELL
+      ABC  12.4 12.4 12.4
+      PERIODIC  NONE
+    &END CELL
+
+    &KIND O
+      BASIS_SET  DZVP-GTH-PADE
+      POTENTIAL  GTH-PADE-q6
+    &END KIND
+
+    &KIND H
+      BASIS_SET  DZVP-GTH-PADE
+      POTENTIAL  GTH-PADE-q1
+    &END KIND
+
+    &COORD
+      O   0.000   0.000   0.117
+      H   0.000   0.757  -0.469
+      H   0.000  -0.757  -0.469
+    &END COORD
+  &END SUBSYS
+&END FORCE_EVAL
+
+&MOTION
+  &MD
+    ENSEMBLE  NVE                   ! NVE 微正则系综
+    STEPS  1000                     ! 1000 步 × 0.5 fs = 500 fs
+    TIMESTEP  0.5                   ! 时间步长 0.5 fs
+    TEMPERATURE  300.0              ! 初始温度 300 K
+  &END MD
+
+  &PRINT
+    &TRAJECTORY
+      FORMAT  XYZ
+      &EACH
+        MD 1
+      &END EACH
+    &END TRAJECTORY
+
+    &VELOCITIES
+      FORMAT  XYZ
+      &EACH
+        MD 10
+      &END EACH
+    &END VELOCITIES
+
+    &FORCES
+      FORMAT  XYZ
+      &EACH
+        MD 10
+      &END EACH
+    &END FORCES
+  &END PRINT
+&END MOTION

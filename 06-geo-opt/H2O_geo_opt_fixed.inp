@@ -1,0 +1,80 @@
+&GLOBAL
+  PROJECT  H2O_geo_opt_fixed
+  RUN_TYPE GEO_OPT
+  PRINT_LEVEL LOW
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD  QS
+
+  &DFT
+    BASIS_SET_FILE_NAME  BASIS_SET
+    POTENTIAL_FILE_NAME  GTH_POTENTIALS
+
+    &MGRID
+      CUTOFF  300
+      REL_CUTOFF  60
+    &END MGRID
+
+    &QS
+      EPS_DEFAULT  1.0E-10
+    &END QS
+
+    &SCF
+      SCF_GUESS  ATOMIC
+      EPS_SCF  1.0E-6
+      MAX_SCF  50
+      &MIXING
+        METHOD  BROYDEN_MIXING
+        ALPHA  0.4
+        NBUFFER  7
+      &END MIXING
+    &END SCF
+
+    &XC
+      &XC_FUNCTIONAL PADE
+      &END XC_FUNCTIONAL
+    &END XC
+  &END DFT
+
+  &SUBSYS
+    &CELL
+      ABC  12.4 12.4 12.4
+      PERIODIC  NONE
+    &END CELL
+
+    &KIND O
+      BASIS_SET  DZVP-GTH-PADE
+      POTENTIAL  GTH-PADE-q6
+    &END KIND
+
+    &KIND H
+      BASIS_SET  DZVP-GTH-PADE
+      POTENTIAL  GTH-PADE-q1
+    &END KIND
+
+    &COORD
+      O   0.000   0.000   0.117
+      H   0.000   0.757  -0.469
+      H   0.000  -0.757  -0.469
+    &END COORD
+  &END SUBSYS
+&END FORCE_EVAL
+
+&MOTION
+  &GEO_OPT
+    OPTIMIZER  CG
+    MAX_ITER  200
+    MAX_DR    1.0E-3
+    RMS_DR    1.0E-3
+    MAX_FORCE  1.0E-3
+    RMS_FORCE  1.0E-3
+  &END GEO_OPT
+
+  &CONSTRAINT
+    &FIXED_ATOMS
+      LIST  1                   ! 固定第 1 号原子（氧原子）
+      COMPONENTS_TO_FIX  XYZ   ! 固定 x, y, z 三个方向
+    &END FIXED_ATOMS
+  &END CONSTRAINT
+&END MOTION

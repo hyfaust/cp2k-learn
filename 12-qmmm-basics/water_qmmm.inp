@@ -1,0 +1,110 @@
+&GLOBAL
+  PROJECT water_qmmm
+  RUN_TYPE ENERGY
+  PRINT_LEVEL LOW
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD QMMM
+
+  &DFT
+    &QS
+      METHOD xTB
+      &xTB
+        DO_EWALD .FALSE.
+      &END xTB
+    &END QS
+    &SCF
+      SCF_GUESS ATOMIC
+      EPS_SCF 1.0E-6
+      MAX_SCF 200
+      &OT
+        MINIMIZER DIIS
+        PRECONDITIONER FULL_SINGLE_INVERSE
+      &END OT
+    &END SCF
+  &END DFT
+
+  &MM
+    &FORCEFIELD
+      &BOND
+        ATOMS O H
+        K [kcalmol*Angstrom^-2] 0.0
+        KIND harmonic
+        R0 [Angstrom] 1.000
+      &END BOND
+      &BEND
+        ATOMS H O H
+        K [kcalmol*rad^-2] 0.0
+        KIND harmonic
+        THETA0 [deg] 109.47
+      &END BEND
+      &CHARGE
+        ATOM O
+        CHARGE -0.820
+      &END CHARGE
+      &CHARGE
+        ATOM H
+        CHARGE +0.410
+      &END CHARGE
+      &NONBONDED
+        &LENNARD-JONES
+          ATOMS O O
+          EPSILON [kJmol] 0.65016958
+          SIGMA [Angstrom] 3.16555789
+          RCUT [Angstrom] 12.0
+        &END LENNARD-JONES
+        &LENNARD-JONES
+          ATOMS O H
+          EPSILON [kJmol] 0.0001
+          SIGMA [Angstrom] 1.0
+          RCUT [Angstrom] 12.0
+        &END LENNARD-JONES
+        &LENNARD-JONES
+          ATOMS H H
+          EPSILON [kJmol] 0.0001
+          SIGMA [Angstrom] 1.0
+          RCUT [Angstrom] 12.0
+        &END LENNARD-JONES
+      &END NONBONDED
+    &END FORCEFIELD
+    &POISSON
+      &EWALD
+        EWALD_TYPE SPME
+        ALPHA 0.35
+        GMAX 80
+      &END EWALD
+    &END POISSON
+  &END MM
+
+  &QMMM
+    E_COUPL COULOMB
+    &CELL
+      ABC 10.0 10.0 10.0
+    &END CELL
+    &QM_KIND O
+      MM_INDEX 1
+    &END QM_KIND
+    &QM_KIND H
+      MM_INDEX 2 3
+    &END QM_KIND
+  &END QMMM
+
+  &SUBSYS
+    &CELL
+      ABC 20.0 20.0 20.0
+    &END CELL
+    &TOPOLOGY
+      COORD_FILE_NAME water_box.xyz
+      COORD_FILE_FORMAT XYZ
+    &END TOPOLOGY
+    &KIND O
+      BASIS_SET DZVP-MOLOPT-GTH
+      POTENTIAL GTH-PBE-q6
+    &END KIND
+    &KIND H
+      BASIS_SET DZVP-MOLOPT-GTH
+      POTENTIAL GTH-PBE-q1
+    &END KIND
+  &END SUBSYS
+&END FORCE_EVAL

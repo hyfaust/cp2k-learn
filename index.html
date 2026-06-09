@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CP2K 新手教程 — 从零开始的计算化学之旅</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" id="hljs-light">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-dark" disabled>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/fortran.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-content">
+      <a href="#" class="nav-brand" onclick="showHome(); return false;">
+        <span class="nav-logo">⚗️</span>
+        <span class="nav-title">CP2K 教程</span>
+      </a>
+      <div class="nav-links">
+        <a href="#" onclick="showHome(); return false;">首页</a>
+        <a href="#" onclick="showGlossary(); return false;">术语表</a>
+        <a href="#" onclick="showProgress(); return false;">学习进度</a>
+        <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">🌙</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Home / Landing Page -->
+  <div id="home-view">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1>CP2K 新手教程</h1>
+        <p class="hero-subtitle">从零开始的计算化学之旅</p>
+        <p class="hero-desc">
+          16 个循序渐进的项目，带你掌握 CP2K 量子化学模拟软件。<br>
+          从单原子能量计算到 GW/BSE 能带结构，每个项目都有详细的理论讲解和可运行的示例代码。
+        </p>
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="stat-num">16</span>
+            <span class="stat-label">教程章节</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">5</span>
+            <span class="stat-label">难度等级</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">30+</span>
+            <span class="stat-label">示例输入</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Learning Path -->
+    <section class="learning-path">
+      <h2>🗺️ 学习路径</h2>
+      <div class="path-container">
+        <div class="path-line"></div>
+        <div class="path-levels">
+          <div class="path-level" data-level="1">
+            <div class="level-badge">⭐</div>
+            <div class="level-label">入门基础</div>
+            <div class="level-chapters">Ch 1-2</div>
+          </div>
+          <div class="path-level" data-level="2">
+            <div class="level-badge">⭐⭐</div>
+            <div class="level-label">DFT 核心</div>
+            <div class="level-chapters">Ch 3-6</div>
+          </div>
+          <div class="path-level" data-level="3">
+            <div class="level-badge">⭐⭐⭐</div>
+            <div class="level-label">动力学模拟</div>
+            <div class="level-chapters">Ch 7-11</div>
+          </div>
+          <div class="path-level" data-level="4">
+            <div class="level-badge">⭐⭐⭐⭐</div>
+            <div class="level-label">高级方法</div>
+            <div class="level-chapters">Ch 12-14</div>
+          </div>
+          <div class="path-level" data-level="5">
+            <div class="level-badge">⭐⭐⭐⭐⭐</div>
+            <div class="level-label">后HF方法</div>
+            <div class="level-chapters">Ch 15-16</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chapter Cards -->
+    <section class="chapters-section">
+      <h2>📚 教程目录</h2>
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterChapters('all')">全部</button>
+        <button class="filter-btn" onclick="filterChapters(1)">⭐ 入门</button>
+        <button class="filter-btn" onclick="filterChapters(2)">⭐⭐ 基础</button>
+        <button class="filter-btn" onclick="filterChapters(3)">⭐⭐⭐ 中级</button>
+        <button class="filter-btn" onclick="filterChapters(4)">⭐⭐⭐⭐ 高级</button>
+        <button class="filter-btn" onclick="filterChapters(5)">⭐⭐⭐⭐⭐ 专家</button>
+      </div>
+      <div class="chapters-grid" id="chapters-grid">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="quick-start">
+      <h2>🚀 快速开始</h2>
+      <div class="qs-content">
+        <div class="qs-step">
+          <div class="qs-num">1</div>
+          <div class="qs-text">
+            <h3>安装 CP2K</h3>
+            <p>通过 Docker、Spack 或从源码编译安装 CP2K</p>
+            <code>docker pull cp2k/cp2k:latest</code>
+          </div>
+        </div>
+        <div class="qs-step">
+          <div class="qs-num">2</div>
+          <div class="qs-text">
+            <h3>选择章节</h3>
+            <p>从第 1 章开始，按难度梯度逐步学习</p>
+          </div>
+        </div>
+        <div class="qs-step">
+          <div class="qs-num">3</div>
+          <div class="qs-text">
+            <h3>运行示例</h3>
+            <p>复制输入文件，运行 CP2K，分析输出结果</p>
+            <code>cp2k.popt -o output.out input.inp</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>CP2K 新手教程 | 基于 <a href="https://www.cp2k.org" target="_blank">CP2K</a> 官方文档和源码</p>
+      <p>CP2K 是一个开源的量子化学和固态物理模拟软件包</p>
+    </footer>
+  </div>
+
+  <!-- Chapter View -->
+  <div id="chapter-view" class="hidden">
+    <div class="chapter-header">
+      <button class="back-btn" onclick="showHome()">← 返回目录</button>
+      <div class="chapter-nav">
+        <button class="chapter-nav-btn" id="prev-chapter" onclick="navigateChapter(-1)">← 上一章</button>
+        <span class="chapter-indicator" id="chapter-indicator"></span>
+        <button class="chapter-nav-btn" id="next-chapter" onclick="navigateChapter(1)">下一章 →</button>
+      </div>
+    </div>
+    <div class="chapter-content" id="chapter-content">
+      <!-- Rendered markdown goes here -->
+    </div>
+    <div class="chapter-footer">
+      <div class="chapter-nav bottom-nav">
+        <button class="chapter-nav-btn" id="prev-chapter-bottom" onclick="navigateChapter(-1)">← 上一章</button>
+        <button class="complete-btn" id="complete-btn" onclick="toggleComplete()">✓ 标记为已完成</button>
+        <button class="chapter-nav-btn" id="next-chapter-bottom" onclick="navigateChapter(1)">下一章 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Glossary View -->
+  <div id="glossary-view" class="hidden">
+    <div class="glossary-header">
+      <button class="back-btn" onclick="showHome()">← 返回首页</button>
+      <h1>📖 CP2K 术语表</h1>
+    </div>
+    <div class="glossary-search">
+      <input type="text" id="glossary-search" placeholder="搜索术语..." oninput="searchGlossary(this.value)">
+    </div>
+    <div class="glossary-grid" id="glossary-grid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Progress View -->
+  <div id="progress-view" class="hidden">
+    <div class="progress-header">
+      <button class="back-btn" onclick="showHome()">← 返回首页</button>
+      <h1>📊 学习进度</h1>
+    </div>
+    <div class="progress-stats" id="progress-stats">
+      <!-- Populated by JS -->
+    </div>
+    <div class="progress-list" id="progress-list">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Glossary Tooltip -->
+  <div class="glossary-tooltip" id="glossary-tooltip"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
